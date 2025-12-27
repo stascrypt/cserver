@@ -1,0 +1,3 @@
+#!/bin/bash
+docker exec -it cserver /root/stop
+docker exec -it cserver /root/start
