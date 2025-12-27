@@ -1,6 +1,6 @@
 перед установкой откройте нужные порты:
 sudo ufw allow 6789
-sudo ufw allow 27015
+sudo ufw allow 27015/udp
 Для запуска сборки образа выполните: 
 docker compose up -d 
 После запуска выполните:
@@ -12,4 +12,5 @@ docker compose up -d
 ./stop        – остановить
 ./restart     – перезапустить
 ./console     – открыть консоль
+
 
