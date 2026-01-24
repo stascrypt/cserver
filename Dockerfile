@@ -38,6 +38,11 @@ server {
         autoindex on;
     }
 
+    location ^~ /banner/ {
+        alias /root/cstrike/banner/;
+        autoindex on;
+    }
+
     location / {
         return 404;
     }
