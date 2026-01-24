@@ -136,7 +136,6 @@ echo "--------------------------------------------------------------------------
 echo                  "Downloading HLDS base files..."
 echo "-------------------------------------------------------------------------------"
 
-# Только SteamCMD (альтернативные источники удалены)
 download_files_steamcmd
 
 if [ ! -d "$INSTALL_DIR/cstrike" ] || [ ! -f "$INSTALL_DIR/hlds_run" ] || [ ! -e "$INSTALL_DIR/cstrike/liblist.gam" ]; then
@@ -344,7 +343,6 @@ if [ $(($INSTALL_TYPE&$AMXMODX)) != 0 ]; then
     cd $INSTALL_DIR/temp/addons/amxmodx/data
     mv csstats.amxx             $INSTALL_DIR/cstrike/addons/amxmodx/data/csstats.amxx
 
-    # configs override
     cd $INSTALL_DIR/temp/addons/amxmodx/configs
     mv stats.ini    $INSTALL_DIR/cstrike/addons/amxmodx/configs/statss.ini
     mv plugins.ini  $INSTALL_DIR/cstrike/addons/amxmodx/configs/pluginss.ini
@@ -378,12 +376,12 @@ if [ $(($INSTALL_TYPE&$CHANGES)) != 0 ]; then
     echo "Creating server.cfg stub (insert your config here)..."
 
     cat > $INSTALL_DIR/cstrike/server.cfg << 'EOF'
-hostname "conter-strike 1.6"
-rcon_password ""
+hostname "Conгter-Strike "
+rcon_password "12385426878"
 sv_password ""
 sv_lan 0
 sv_contact ""
-sv_downloadurl ""
+sv_downloadurl "http://<ip>:6789"
 sv_allowdownload 1
 sv_allowupload 1
 
@@ -434,7 +432,7 @@ mp_damage_arm 1.0
 mp_damage_leg 0.75
 
 // Мани-система 
-mp_startmoney 800
+mp_startmoney 1000
 mp_maxmoney 16000
 mp_afterroundmoney 0
 
@@ -540,7 +538,7 @@ if [ $(($INSTALL_TYPE&$REGAMEDLL)) != 0 ]; then
     rm -f regamedll-bin-${regamedll_url}.zip
 fi
 
-# -------------------- ReAPI ---------------------------------------------------
+# -------------------- ReAPI ----------------------------------------
 if [ $(($INSTALL_TYPE&$REAPI)) != 0 ]; then
     echo "Installing ReAPI v. ${reapi_version}..."
     sleep 2
@@ -556,7 +554,6 @@ if [ $(($INSTALL_TYPE&$REAPI)) != 0 ]; then
 
     unzip -q "reapi-bin-${reapi_version}.zip"
 
-    # На всякий случай ищем файлы (в релизах могут лежать в поддиректориях)
     REAPI_SO_PATH=$(find . -type f -name "reapi_amxx_i386.so" | head -n1)
     REAPI_INC_PATH=$(find . -type f -name "reapi.inc" | head -n1)
 
@@ -577,7 +574,7 @@ if [ $(($INSTALL_TYPE&$REAPI)) != 0 ]; then
     echo "ReAPI ${reapi_version} installed successfully!"
 fi
 
-# -------------------- modules.ini (FORCED) ------------------------------------
+# -------------------- modules.ini ------------------------------------
 cat > /root/cstrike/addons/amxmodx/configs/modules.ini << 'EOF'
 ;mysql
 ;sqlite
@@ -660,14 +657,9 @@ fi
 echo "External IP detected: $EXTERNAL_IP"
 echo "Updating sv_downloadurl in /root/cstrike/server.cfg..."
 
-# Чтобы не падало, если server.cfg ещё не вставлен
-if [ -f /root/cstrike/server.cfg ]; then
-    sed -i "s|http://<ip>:6789|http://${EXTERNAL_IP}:6789|g" /root/cstrike/server.cfg
-    echo "sv_downloadurl updated!"
-else
-    echo "WARNING: /root/cstrike/server.cfg not found. Skipping sv_downloadurl update."
-    echo "         Create /root/cstrike/server.cfg and include placeholder: http://<ip>:6789"
-fi
+sed -i "s|http://<ip>:6789|http://${EXTERNAL_IP}:6789|g" /root/cstrike/server.cfg
+
+echo "sv_downloadurl updated!"
 
 echo "-------------------------------------------------------------------------------"
 echo "Server installed in directory: '$INSTALL_DIR'"
