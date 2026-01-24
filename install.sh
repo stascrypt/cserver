@@ -25,11 +25,14 @@ echo "--------------------------------------------------------------------------
 echo                 "Installing Counter Strike 1.6 Server"
 echo "-------------------------------------------------------------------------------"
 
-rehlds_url=$(wget -qO - https://img.shields.io/github/v/release/dreamstalker/rehlds.svg | grep -oP '(?<=release: v)[0-9.]*(?=</title>)')
-regamedll_url=$(wget -qO - https://img.shields.io/github/release/s1lentq/ReGameDLL_CS.svg | grep -oP '(?<=release: v)[0-9.]*(?=</title>)')
-metamodr_url=$(wget -qO - https://img.shields.io/github/release/theAsmodai/metamod-r.svg | grep -oP '(?<=release: v)[0-9.]*(?=</title>)')
+rehlds_url=$(wget -qO - https://img.shields.io/github/v/release/dreamstalker/rehlds.svg | grep -oP '(?<=release: v)[0-9.]*(?=</title>)' | head -n1)
+regamedll_url=$(wget -qO - https://img.shields.io/github/release/s1lentq/ReGameDLL_CS.svg | grep -oP '(?<=release: v)[0-9.]*(?=</title>)' | head -n1)
+metamodr_url=$(wget -qO - https://img.shields.io/github/release/theAsmodai/metamod-r.svg | grep -oP '(?<=release: v)[0-9.]*(?=</title>)' | head -n1)
 
-reunion_version=$(wget -qO - "https://img.shields.io/github/v/release/s1lentq/reunion.svg?include_prereleases" | grep -oP '(?<=release: v)[0-9.]*(?=</title>)')
+reunion_version=$(wget -qO - "https://img.shields.io/github/v/release/s1lentq/reunion.svg?include_prereleases" | grep -oP '(?<=release: v)[0-9.]*(?=</title>)' | head -n1)
+
+# ReAPI (rehlds/ReAPI)
+reapi_version=$(wget -qO - https://img.shields.io/github/v/release/rehlds/ReAPI.svg | grep -oP '(?<=release: v)[0-9.]*(?=</title>)' | head -n1)
 
 amxx_version=$(wget -T 5 -qO - https://raw.githubusercontent.com/lukasenka/rehlds-versions/main/amxx-version.txt)
 amxx_build=$(wget -T 5 -qO - https://raw.githubusercontent.com/lukasenka/rehlds-versions/main/amxx-build.txt)
@@ -40,6 +43,7 @@ echo "ReGameDLL:   $regamedll_url"
 echo "Metamod-r:   $metamodr_url"
 echo "Reunion:     $reunion_version"
 echo "AMXX:        $amxx_version build $amxx_build"
+echo "ReAPI:       $reapi_version"
 echo "-------------------------------------------------------------------------------"
 
 generate_random_string() {
@@ -83,32 +87,6 @@ check_dir() {
     echo "-------------------------------------------------------------------------------"
 }
 
-check_speed() {
-    echo "[ReHLDS] Checking download speed..."
-    speed=$(wget -O /dev/null http://speedtest.tele2.net/10MB.zip 2>&1 | grep -o '[0-9.]* [KM]B/s' | tail -1)
-    echo "[ReHLDS] Speed: $speed"
-
-    if [[ $speed == *"MB/s"* ]]; then
-        download_speed=$(echo $speed | awk '{print $1 * 8}')
-    else
-        download_speed=$(echo $speed | awk '{print $1 / 1000 * 8}')
-    fi
-    echo $download_speed
-}
-
-download_files_arch() {
-    echo "[ReHLDS] Using Dropbox hlds.tar.gz..."
-    cd $INSTALL_DIR
-    wget -O _hlds.tar.gz "https://www.dropbox.com/scl/fi/qddwy787rbc751lt5v00v/hlds.tar.gz?rlkey=jbvxybo63cu4fg2fipwuxhywx&st=20xpq6at&dl=1"
-    if [ ! -e "_hlds.tar.gz" ]; then
-        echo "Error: Could not download server files. Aborting..."
-        exit 1
-    fi
-    tar zxvf _hlds.tar.gz
-    rm _hlds.tar.gz
-    chmod +x hlds_run hlds_linux
-}
-
 download_files_steamcmd() {
     echo "[ReHLDS] Using SteamCMD app_update 90..."
     mkdir -p $INSTALL_DIR/steamcmd
@@ -144,6 +122,7 @@ DPROTO=$((1<<1))
 AMXMODX=$((1<<2))
 CHANGES=$((1<<3))
 REGAMEDLL=$((1<<4))
+REAPI=$((1<<5))
 
 INSTALL_TYPE=0
 INSTALL_TYPE=$(($INSTALL_TYPE|$METAMOD))
@@ -151,18 +130,14 @@ INSTALL_TYPE=$(($INSTALL_TYPE|$DPROTO))
 INSTALL_TYPE=$(($INSTALL_TYPE|$AMXMODX))
 INSTALL_TYPE=$(($INSTALL_TYPE|$CHANGES))
 INSTALL_TYPE=$(($INSTALL_TYPE|$REGAMEDLL))
+INSTALL_TYPE=$(($INSTALL_TYPE|$REAPI))
 
 echo "-------------------------------------------------------------------------------"
 echo                  "Downloading HLDS base files..."
 echo "-------------------------------------------------------------------------------"
 
-speed=$(check_speed)
-
-if (( $(echo "$speed < 10" | bc -l) )); then
-    download_files_arch
-else
-    download_files_steamcmd
-fi
+# Только SteamCMD (альтернативные источники удалены)
+download_files_steamcmd
 
 if [ ! -d "$INSTALL_DIR/cstrike" ] || [ ! -f "$INSTALL_DIR/hlds_run" ] || [ ! -e "$INSTALL_DIR/cstrike/liblist.gam" ]; then
     echo "Error: Failed to download server files."
@@ -172,7 +147,7 @@ fi
 cd $INSTALL_DIR
 
 echo "-------------------------------------------------------------------------------"
-echo         "Installing ReHLDS + Metamod-r + Reunion + AMXX + ReGameDLL..."
+echo         "Installing ReHLDS + Metamod-r + Reunion + AMXX + ReGameDLL + ReAPI..."
 echo "-------------------------------------------------------------------------------"
 
 if [ $(($INSTALL_TYPE&$METAMOD)) != 0 ]; then
@@ -398,56 +373,51 @@ if [ $(($INSTALL_TYPE&$AMXMODX)) != 0 ]; then
     echo "AMXX installed."
 fi
 
+# ----------- server.cfg ------------
 if [ $(($INSTALL_TYPE&$CHANGES)) != 0 ]; then
     echo "Creating server.cfg stub (insert your config here)..."
 
     cat > $INSTALL_DIR/cstrike/server.cfg << 'EOF'
-ц// ============================================
-// ОСНОВНЫЕ НАСТРОЙКИ
-// ============================================
-hostname "server cs 1.6"
+hostname "conter-strike 1.6"
 rcon_password ""
 sv_password ""
 sv_lan 0
 sv_contact ""
-sv_downloadurl "http://<ip>:6789"
+sv_downloadurl ""
 sv_allowdownload 1
 sv_allowupload 1
-sv_send_logos 1
-sv_send_resources 1
 
-// ============================================
-// СЕТЬ И ПРОИЗВОДИТЕЛЬНОСТЬ
-// ============================================
-// Rate настройки для разных каналов
-// sv_maxrate 0                          // 0 = автоопределение (рекомендуется)
-// или вручную:
-// sv_maxrate 25000                      // 256 Kbit
-// sv_maxrate 50000                      // 512 Kbit
-// sv_maxrate 100000                     // 1 Mbit
-sv_maxrate 250000                        // 2.5 Mbit+
-sv_minrate 5000
-sv_maxupdaterate 101
-sv_minupdaterate 30
+// =============================
+// NETWORK 
+// =============================
+sv_maxrate 1000000
+sv_minrate 25000
+sv_maxupdaterate 102
+sv_minupdaterate 20
+sv_maxcmdrate 102
+sv_mincmdrate 20
+sv_unlag 1
+sv_maxunlag 0.5
+sv_unlagsamples 1
+
 sys_ticrate 1000
-fps_max 600
-sv_unlag 1                               // Предсказание движения (1 = вкл)
-sv_maxunlag 0.5                          // Макс. коррекция в секундах
-sv_unlagpush 0
+fps_max 300
 
-// ============================================
-// ГЕЙМПЛЕЙ - ОБЩИЕ
-// ============================================
+sv_timeout 65
+
+// =============================
+// GAMEPLAY
+// =============================
 mp_timelimit 30
 mp_freezetime 3
 mp_roundtime 3
-mp_buytime 0.5                           // 0.5 = 30 секунд
 mp_c4timer 35
+mp_buytime 0.5
 mp_forcechasecam 0
-mp_forcecamera 0                         // 0=свободная, 1=только команда, 2=первое лицо команды
-mp_fadetoblack 0                         // 0=нет затемнения, 1=после смерти
-mp_chattime 10                           // Время показа сообщений убийств
-mp_playerid 0                            // 0=все имена, 1=только команда, 2=никаких
+mp_forcecamera 0
+mp_fadetoblack 0
+mp_chattime 10
+mp_playerid 0
 mp_footsteps 1
 mp_flashlight 1
 mp_autokick 0
@@ -455,37 +425,22 @@ mp_autoteambalance 0
 mp_limitteams 0
 mp_tkpunish 0
 mp_hostagepenalty 0
-mp_refill_bpammo_weapons 1               // 1=пополнение патронов при подборе оружия
 
-// ============================================
-// ДЕНЬГИ И ЭКОНОМИКА
-// ============================================
-mp_startmoney 5000
+// Мультипликаторы урона
+mp_damage_head 4.0
+mp_damage_chest 1.0
+mp_damage_stomach 1.25
+mp_damage_arm 1.0
+mp_damage_leg 0.75
+
+// Мани-система 
+mp_startmoney 800
 mp_maxmoney 16000
-mp_buytime 0.5
-mp_afterroundmoney 0                     // Деньги после раунда (0=стандарт)
-mp_roundrespawn_time 0                   // Задержка респауна в секундах (0=выкл)
+mp_afterroundmoney 0
 
-// Настройки потерь/наград
-mp_damage_head 4.0                       // Мультипликатор урона в голову
-mp_damage_chest 1.0                      // Мультипликатор урона в грудь
-mp_damage_stomach 1.25                   // Мультипликатор урона в живот
-mp_damage_arm 1.0                        // Мультипликатор урона в руку
-mp_damage_leg 0.75                       // Мультипликатор урона в ногу
-
-// Награды за убийства
-mp_kill_reward 650                       // Награда за убийство
-mp_headshot_reward 500                   // Доп. награда за хедшот
-mp_knife_reward 1500                     // Награда за убийство ножом
-mp_grenade_reward 650                    // Награда за убийство гранатой
-mp_assist_reward 300                     // Награда за помощь
-mp_victory_reward 3000                   // Награда за победу в раунде
-mp_defusal_reward 300                    // Награда за разминирование
-mp_rescued_hostage_reward 1000           // Награда за спасение заложника
-
-// ============================================
-// ФИЗИКА И ДВИЖЕНИЕ
-// ============================================
+// =============================
+// PHYSICS
+// =============================
 sv_gravity 800
 sv_airaccelerate 10
 sv_accelerate 5
@@ -496,129 +451,59 @@ sv_wateraccelerate 10
 sv_waterfriction 1
 sv_maxspeed 320
 sv_spectatormaxspeed 500
-sv_bounce 1                              // Отскок гранат (1=реалистичный)
-sv_rollangle 0
-sv_rollspeed 200
-sv_visiblemaxplayers 32
 
-// ============================================
-// ОРУЖИЕ И ПРЕДМЕТЫ
-// ============================================
-mp_nadedrops 1                           // Выпадение гранат после смерти
-mp_weaponstay 1                          // 0=оружие исчезает, 1=остается
-mp_weapon_respawn 0                      // Респаун оружия (0=никогда, 1=всегда)
-mp_itemstay 0
-mp_decals 300                            // Макс. количество декалей (следы пуль)
-mp_decal_lifetime 30                     // Время жизни декалей в секундах
-mp_corpsestay 0                          // Трупы до конца раунда (стандарт)
-
-// Специфичные настройки оружия
-mp_awp_oneshot_kill 1                    // 1=AWP убивает с одного попадания
-mp_deagle_oneshot_kill 1                 // 1=Deagle убивает с одного попадания в голову
-mp_glockburst 0                          // 0=одиночные, 1=очередью для Glock18
-mp_famasburst 0                          // 0=одиночные, 1=очередью для FAMAS
-
-// ============================================
-// ГОЛОСОВОЙ ЧАТ И КОММУНИКАЦИЯ
-// ============================================
+// =============================
+// VOICE
+// =============================
 sv_voiceenable 1
-sv_alltalk 0                             // 0=командный чат, 1=общий, 2=спец.режим
-sv_voicecodec vaudio_speex               // Кодек голосового чата
-sv_voicequality 5                        // Качество голоса (1-5)
-mp_chattime 10
-sv_hlvoice 0                             // 0=Valve Voice, 1=Half-Life Voice
-sv_ignoregrenaderadio 1                  // Игнорировать радио-сообщения о гранатах
+sv_alltalk 0
+sv_voicecodec vaudio_speex
+sv_voicequality 5
 
-// ============================================
-// ЛОГИРОВАНИЕ И АДМИНИСТРИРОВАНИЕ
-// ============================================
+// =============================
+// LOGGING
+// =============================
 log on
 sv_logbans 1
 sv_logecho 1
 sv_logfile 1
 sv_log_onefile 0
-sv_logblocks 0                           // Блокировка спама в логах
-mp_logdetail 3                           // Детализация логов (0-3)
-mp_logmessages 1                         // Логировать чат
+mp_logdetail 3
+mp_logmessages 1
 
-// Анти-флуд
-sv_timeout 65                            // Таймаут подключения
-sv_maxping 0                             // Макс. пинг (0=отключено)
-sv_minping 0                             // Мин. пинг
-sv_maxcmdrate 101                        // Макс. cmdrate
-sv_mincmdrate 30                         // Мин. cmdrate
-
-// ============================================
-// ВАЛИДАЦИЯ И БЕЗОПАСНОСТЬ
-// ============================================
+// =============================
+// VALIDATION
+// =============================
 sv_cheats 0
 sv_consistency 1
-sv_pure 1                                // 1=строгая проверка файлов
-sv_pure_kick_clients 0                   // 1=кикать несоответствующих клиентов
-sv_sendinterval 0.05                     // Интервал отправки данных
-sv_filetransfercompression 1             // Сжатие передаваемых файлов
-sv_allow_upload 1                        // Разрешить загрузку спреев
-sv_allow_download_ent 1                  // Разрешить загрузку .ent файлов
+sv_pure 1
+sv_pure_kick_clients 0
 
-// ============================================
-// СПЕЦИАЛЬНЫЕ РЕЖИМЫ И ФУНКЦИИ
-// ============================================
-// Zombie Plague (если используется)
-// zp_delay 5
-// zp_gamemode 1
+// =============================
+// REGION
+// =============================
+sv_region 255
 
-// Deathrun
-// dr_activer 1
-
-// Surf/Bhop
-// sv_cheats 1 (требуется для некоторых surf серверов)
-// sv_gravity 0 (для surf)
-// sv_airaccelerate 150 (для bhop/surf)
-
-// GunGame
-// gg_enabled 1
-// gg_tr_winner_pts 2
-
-// ============================================
-// РЕГИОНАЛЬНЫЕ НАСТРОЙКИ
-// ============================================
-sv_region 255                            // 255=весь мир
-// 0 - US East coast
-// 1 - US West coast
-// 2 - South America
-// 3 - Europe
-// 4 - Asia
-// 5 - Australia
-// 6 - Middle East
-// 7 - Africa
-// 255 - Global
-
-// ============================================
-// ФАЙЛЫ И КОНФИГУРАЦИИ
-// ============================================
+// =============================
+// FILES
+// =============================
 mapcyclefile "mapcycle.txt"
 motdfile "motd.txt"
-motd_write_once 1                        // Показывать MOTD только один раз за сессию
-motd_color "255 255 255"                 // Цвет текста MOTD
-motd_bgcolor "0 0 0"                     // Цвет фона MOTD
-stats_logging 1                          // Логирование статистики
+motd_write_once 1
 banid_file "banned.cfg"
 listip_file "listip.cfg"
-writeid                                  // Сохранить banid
-writeip                                  // Сохранить listip
+writeid
+writeip
 
-// ============================================
-// ЗАПУСК И ИНИЦИАЛИЗАЦИЯ
-// ============================================
+// =============================
+// EXEC CHAINS
+// =============================
+exec rehlds.cfg
 exec banned.cfg
 exec listip.cfg
-exec yapb.cfg
-exec amxx.cfg                             // Если используется AMX Mod X
-// exec mani_server.cfg                   // Если используется Mani Admin Plugin
-// exec sourcemod.cfg                     // Если используется SourceMod
+exec amxx.cfg
 
 EOF
-
 
 
     echo "server.cfg created. Replace its contents with your own config."
@@ -654,6 +539,55 @@ if [ $(($INSTALL_TYPE&$REGAMEDLL)) != 0 ]; then
     rm -rf bin
     rm -f regamedll-bin-${regamedll_url}.zip
 fi
+
+# -------------------- ReAPI ---------------------------------------------------
+if [ $(($INSTALL_TYPE&$REAPI)) != 0 ]; then
+    echo "Installing ReAPI v. ${reapi_version}..."
+    sleep 2
+
+    mkdir -p $INSTALL_DIR/reapi-temp
+    cd $INSTALL_DIR/reapi-temp
+
+    wget -q "https://github.com/rehlds/ReAPI/releases/download/${reapi_version}/reapi-bin-${reapi_version}.zip"
+    if [ ! -e "reapi-bin-${reapi_version}.zip" ]; then
+        echo "Error: Cannot download ReAPI. Aborting..."
+        exit 1
+    fi
+
+    unzip -q "reapi-bin-${reapi_version}.zip"
+
+    # На всякий случай ищем файлы (в релизах могут лежать в поддиректориях)
+    REAPI_SO_PATH=$(find . -type f -name "reapi_amxx_i386.so" | head -n1)
+    REAPI_INC_PATH=$(find . -type f -name "reapi.inc" | head -n1)
+
+    if [ -z "$REAPI_SO_PATH" ] || [ -z "$REAPI_INC_PATH" ]; then
+        echo "Error: ReAPI files not found in archive. Aborting..."
+        exit 1
+    fi
+
+    mkdir -p $INSTALL_DIR/cstrike/addons/amxmodx/modules
+    mkdir -p $INSTALL_DIR/cstrike/addons/amxmodx/scripting/include
+
+    cp "$REAPI_SO_PATH"  "$INSTALL_DIR/cstrike/addons/amxmodx/modules/"
+    cp "$REAPI_INC_PATH" "$INSTALL_DIR/cstrike/addons/amxmodx/scripting/include/"
+
+    cd $INSTALL_DIR
+    rm -rf reapi-temp
+
+    echo "ReAPI ${reapi_version} installed successfully!"
+fi
+
+# -------------------- modules.ini (FORCED) ------------------------------------
+cat > /root/cstrike/addons/amxmodx/configs/modules.ini << 'EOF'
+;mysql
+;sqlite
+fun
+geoip
+sockets
+regex
+nvault
+reapi
+EOF
 
 echo "Creating helper scripts (start-line, start, stop, restart, console)..."
 
@@ -726,9 +660,14 @@ fi
 echo "External IP detected: $EXTERNAL_IP"
 echo "Updating sv_downloadurl in /root/cstrike/server.cfg..."
 
-sed -i "s|http://<ip>:6789|http://${EXTERNAL_IP}:6789|g" /root/cstrike/server.cfg
-
-echo "sv_downloadurl updated!"
+# Чтобы не падало, если server.cfg ещё не вставлен
+if [ -f /root/cstrike/server.cfg ]; then
+    sed -i "s|http://<ip>:6789|http://${EXTERNAL_IP}:6789|g" /root/cstrike/server.cfg
+    echo "sv_downloadurl updated!"
+else
+    echo "WARNING: /root/cstrike/server.cfg not found. Skipping sv_downloadurl update."
+    echo "         Create /root/cstrike/server.cfg and include placeholder: http://<ip>:6789"
+fi
 
 echo "-------------------------------------------------------------------------------"
 echo "Server installed in directory: '$INSTALL_DIR'"
@@ -738,6 +677,7 @@ echo "  Metamod-r:  ${metamodr_url}"
 echo "  Reunion:    ${reunion_version}"
 echo "  AMXX:       ${amxx_version} build ${amxx_build}"
 echo "  ReGameDLL:  ${regamedll_url}"
+echo "  ReAPI:      ${reapi_version}"
 echo "-------------------------------------------------------------------------------"
 echo "Scripts:"
 echo "  ./start       – start server"
