@@ -647,19 +647,29 @@ fi
 
 echo "Detecting external IP..."
 
-EXTERNAL_IP=$(curl -s https://api.ipify.org || wget -qO- https://api.ipify.org)
+EXTERNAL_IP=$(curl -s https://api.ipify.org)
 
 if [ -z "$EXTERNAL_IP" ]; then
-    echo "ERROR: Unable to detect external IP."
+    echo "ERROR: External IP not detected"
     exit 1
 fi
 
 echo "External IP detected: $EXTERNAL_IP"
-echo "Updating sv_downloadurl in /root/cstrike/server.cfg..."
+
+echo "Updating server.cfg and motd.txt..."
 
 sed -i "s|http://<ip>:6789|http://${EXTERNAL_IP}:6789|g" /root/cstrike/server.cfg
 
-echo "sv_downloadurl updated!"
+cat > /root/cstrike/motd.txt <<EOF
+<html>
+<body style="margin:0; padding:0; background:#000;">
+<img src="http://${EXTERNAL_IP}:6789/banner/banner.jpg"
+     style="width:100%; height:auto; display:block;" />
+</body>
+</html>
+EOF
+
+echo "server.cfg and motd.txt updated successfully"
 
 echo "-------------------------------------------------------------------------------"
 echo "Server installed in directory: '$INSTALL_DIR'"
