@@ -53,28 +53,31 @@ generate_random_string() {
 
 check_packages() {
     echo "Checking required packages..."
-    BIT64_CHECK=false && [ "$(getconf LONG_BIT)" == "64" ] && BIT64_CHECK=true
 
-    LIB_CHECK=true
-    for lib in $bits_lib_32; do
-        if [ "$((dpkg --get-selections $lib 2>/dev/null | egrep -o '(de)?install'))" != "install" ]; then
-            LIB_CHECK=false
-            break
-        fi
-    done
-
-    SCREEN_CHECK=false && [ "$((dpkg --get-selections screen 2>/dev/null | egrep -o '(de)?install'))" = "install" ] && SCREEN_CHECK=true
-    UNZIP_CHECK=false && [ "$((dpkg --get-selections unzip 2>/dev/null | egrep -o '(de)?install'))" = "install" ] && UNZIP_CHECK=true
-    CURL_CHECK=false && [ "$((dpkg --get-selections curl 2>/dev/null | egrep -o '(de)?install'))" = "install" ] && CURL_CHECK=true
+    BIT64_CHECK=false
+    [ "$(getconf LONG_BIT)" = "64" ] && BIT64_CHECK=true
 
     apt-get -y update
 
-    if $BIT64_CHECK && ! $LIB_CHECK; then
-        apt-get -y install $bits_lib_32
+    if $BIT64_CHECK; then
+        for lib in $bits_lib_32; do
+            if ! dpkg -s "$lib" >/dev/null 2>&1; then
+                echo "Installing $lib..."
+                apt-get -y install "$lib"
+            else
+                echo "$lib already installed"
+            fi
+        done
     fi
-    if ! $SCREEN_CHECK; then apt-get -y install screen; fi
-    if ! $UNZIP_CHECK;  then apt-get -y install unzip; fi
-    if ! $CURL_CHECK;   then apt-get -y install curl; fi
+
+    for pkg in screen unzip curl; do
+        if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+            echo "Installing $pkg..."
+            apt-get -y install "$pkg"
+        else
+            echo "$pkg already installed"
+        fi
+    done
 }
 
 check_dir() {
