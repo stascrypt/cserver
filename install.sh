@@ -454,6 +454,13 @@ sv_maxspeed 320
 sv_spectatormaxspeed 500
 
 // =============================
+// CVARS
+// =============================
+sv_customsmoke 1
+sv_smokeduration 30.0
+sv_smokespritescount 100
+
+// =============================
 // VOICE
 // =============================
 sv_voiceenable 1
