@@ -646,8 +646,13 @@ sed -i 's/debugcore \$retval/debugcore \$retval\n\n\t\t\tif test -z "\$RESTART" 
 sed -i 's/if test -n "\$DEBUG" ; then/if test "\$DEBUG" -eq 1; then/' hlds_run
 
 if [ ! -e "$INSTALL_DIR/steam_appid.txt" ]; then
-    echo "10" > steam_appid.txt
+    echo "10" > "$INSTALL_DIR/steam_appid.txt"
 fi
+echo "Preparing banner directory..."
+
+mkdir -p /root/cstrike/banner
+
+echo "Banner directory ready: /root/cstrike/banner"
 
 echo "Detecting external IP..."
 
@@ -657,12 +662,6 @@ if [ -z "$EXTERNAL_IP" ]; then
     echo "ERROR: External IP not detected"
     exit 1
 fi
-
-echo "Preparing banner directory..."
-
-mkdir -p /root/cstrike/banner
-
-echo "Banner directory ready: /root/cstrike/banner"
 
 echo "External IP detected: $EXTERNAL_IP"
 
