@@ -22,6 +22,8 @@ RUN apt-get update && \
     mkdir -p /root/cstrike
 
 COPY install.sh /install.sh
+COPY banner.jpg /assets/banner.jpg
+
 RUN chmod +x /install.sh   
 
 RUN rm -f /etc/nginx/sites-enabled/default && \
