@@ -1,3 +1,4 @@
 #!/bin/bash
 docker exec -it cserver /root/stop
+sleep 5
 docker exec -it cserver /root/start
