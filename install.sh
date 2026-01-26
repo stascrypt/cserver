@@ -379,7 +379,7 @@ if [ $(($INSTALL_TYPE&$CHANGES)) != 0 ]; then
     echo "Creating server.cfg stub (insert your config here)..."
 
     cat > $INSTALL_DIR/cstrike/server.cfg << 'EOF'
-hostname "Conгter-Strike "
+hostname "Counter-Strike"
 rcon_password "12385426878"
 sv_password ""
 sv_lan 0
@@ -625,6 +625,7 @@ chmod +x /root/stop
 cat > /root/restart << 'EOF'
 #!/bin/bash
 supervisorctl stop cs
+sleep 5
 supervisorctl start cs
 EOF
 chmod +x /root/restart
