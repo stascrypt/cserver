@@ -652,6 +652,13 @@ echo "Preparing banner directory..."
 
 mkdir -p /root/cstrike/banner
 
+if [ -f /assets/banner.jpg ]; then
+    cp /assets/banner.jpg /root/cstrike/banner/banner.jpg
+    echo "Banner copied to /root/cstrike/banner"
+else
+    echo "Banner file not found, skipping"
+fi
+
 echo "Banner directory ready: /root/cstrike/banner"
 
 echo "Detecting external IP..."
