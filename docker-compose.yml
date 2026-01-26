@@ -1,11 +1,12 @@
 services:
-  ubuntu-root:
+  cserver:
     build: .
     image: cserver:latest
     container_name: cserver
+    restart: unless-stopped
     ports:
       - "27015:27015/udp"
-      - "6789:6789"
+      - "27015:27015/tcp"
+      - "6789:6789/tcp"
     volumes:
-      - ./data:/root  
-    restart: unless-stopped
+      - ./data:/root
