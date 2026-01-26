@@ -658,6 +658,12 @@ if [ -z "$EXTERNAL_IP" ]; then
     exit 1
 fi
 
+echo "Preparing banner directory..."
+
+mkdir -p /root/cstrike/banner
+
+echo "Banner directory ready: /root/cstrike/banner"
+
 echo "External IP detected: $EXTERNAL_IP"
 
 echo "Updating server.cfg and motd.txt..."
